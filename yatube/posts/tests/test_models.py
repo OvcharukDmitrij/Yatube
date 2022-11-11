@@ -25,6 +25,9 @@ class PostModelTest(TestCase):
             text=POST_TEXT,
         )
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
         cache.clear()
 
     def test_models_have_correct_object_names(self):

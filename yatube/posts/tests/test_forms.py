@@ -39,11 +39,11 @@ class PostCreateFormsTest(TestCase):
         cls.authorized_client.force_login(cls.user)
         cls.form = PostForm()
 
-        cache.clear()
-
     @classmethod
     def tearDownClass(cls):
+        super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        cache.clear()
 
     def test_create_post(self):
         """Валидная форма создает запись в Post."""

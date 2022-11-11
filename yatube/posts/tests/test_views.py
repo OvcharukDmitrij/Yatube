@@ -24,6 +24,7 @@ class PostPagesTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
+        cls.other_user = User.objects.create_user(username='other_auth')
         cls.group = Group.objects.create(
             title=GROUP_TITLE,
             slug=GROUP_SLUG,
@@ -56,14 +57,16 @@ class PostPagesTest(TestCase):
         )
         cls.guest_client = Client()
         cls.authorized_client = Client()
-        cls.client = User.objects.get(username='auth')
+        cls.authorized_other_client = Client()
+        # cls.client = User.objects.get(username='auth')
         cls.authorized_client.force_login(cls.user)
-
-        cache.clear()
+        cls.authorized_other_client.force_login(cls.other_user)
 
     @classmethod
     def tearDownClass(cls):
+        super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        cache.clear()
 
     def test_pages_uses_correct_template(self):
         """Проверяем правильность применения соответствующих шаблонов """
@@ -87,9 +90,6 @@ class PostPagesTest(TestCase):
             with self.subTest(name=name):
                 response = PostPagesTest.authorized_client.get(name)
                 self.assertTemplateUsed(response, template)
-
-    def setUp(self):
-        cache.clear()
 
     def test_index_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом"""
@@ -221,29 +221,20 @@ class PostPagesTest(TestCase):
             response_before_post.content,
             response_after_post.content
         )
-        self.assertEqual(
+        self.assertNotEqual(
             response_after_post.content,
             response_cache_clear.content
         )
 
     def setUp(self):
-        self.user = User.objects.create_user(username='user')
-        self.other_user = User.objects.create_user(username='other_user')
-        self.author = User.objects.create_user(username='author')
-        self.authorized_client_user = Client()
-        self.authorized_client_other_user = Client()
-        self.authorized_client_user.force_login(self.user)
-        self.authorized_client_other_user.force_login(self.other_user)
-
-        cache.clear()
 
         Post.objects.create(
             text=POST_TEXT,
-            author=self.author
+            author=PostPagesTest.other_user
         )
         Follow.objects.create(
-            user_id=self.user.id,
-            author_id=self.author.id
+            user_id=PostPagesTest.user.id,
+            author_id=PostPagesTest.other_user.id
         )
 
     def test_follow(self):
@@ -252,10 +243,10 @@ class PostPagesTest(TestCase):
         которые не подписаны на автора"""
         url = reverse('posts:follow_index')
 
-        response_follow = self.authorized_client_user.get(url)
+        response_follow = PostPagesTest.authorized_client.get(url)
         object_follow = response_follow.context['page_obj']
 
-        response_not_follow = self.authorized_client_other_user.get(url)
+        response_not_follow = PostPagesTest.authorized_other_client.get(url)
         object_not_follow = response_not_follow.context['page_obj']
 
         self.assertNotEqual(object_follow, object_not_follow)
@@ -265,8 +256,6 @@ class PostPagesTest(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.authors = self.user.follower.all()
-
-        cache.clear()
 
     def test_follow_auth(self):
         """Проверяем что пользователь не может подписаться на
@@ -284,8 +273,7 @@ class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        User.objects.create_user(username='other_auth')
-        cls.client = User.objects.get(username='other_auth')
+        cls.client = User.objects.create_user(username='other_auth')
         cls.group = Group.objects.create(
             title=GROUP_TITLE,
             slug=GROUP_SLUG,
@@ -304,6 +292,9 @@ class PaginatorViewsTest(TestCase):
         ]
         Post.objects.bulk_create(PaginatorViewsTest.posts_list)
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
         cache.clear()
 
     def test_first_page_contains_ten_records(self):
