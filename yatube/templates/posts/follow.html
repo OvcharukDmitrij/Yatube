@@ -1,13 +1,11 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
-{% load cache %}
 {% block title %}
   Посты любимых авторов
 {% endblock %}
 {% block content %}
   <h1>Посты любимых авторов</h1>
   {% include 'posts/includes/switcher.html' %}
-  {% cache 20 index_page %}
   {% for post in page_obj %}
     <article>
       <ul>
@@ -36,6 +34,5 @@
     {% endif %}
     {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}
-  {% endcache %}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}

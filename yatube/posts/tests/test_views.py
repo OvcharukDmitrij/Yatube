@@ -57,10 +57,7 @@ class PostPagesTest(TestCase):
         )
         cls.guest_client = Client()
         cls.authorized_client = Client()
-        cls.authorized_other_client = Client()
-        # cls.client = User.objects.get(username='auth')
         cls.authorized_client.force_login(cls.user)
-        cls.authorized_other_client.force_login(cls.other_user)
 
     @classmethod
     def tearDownClass(cls):
@@ -204,67 +201,105 @@ class PostPagesTest(TestCase):
         latest_comment = latest_object.comment
         self.assertEqual(PostPagesTest.post.comment, latest_comment)
 
+
+class CacheTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='auth')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.post = Post.objects.create(
+            text=POST_TEXT,
+            author=cls.user
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cache.clear()
+
     def setUp(self):
         cache.clear()
 
     def test_cache(self):
         """Проверка кеширования главной страницы"""
         url = reverse('posts:posts_index')
-        response_before_post = PostPagesTest.authorized_client.get(url)
-        post = Post.objects.create(text=POST_TEXT, author=PostPagesTest.user)
-        post.delete()
-        response_after_post = PostPagesTest.authorized_client.get(url)
+
+        response_before = CacheTest.authorized_client.get(url)
+
+        CacheTest.post.delete()
+
+        response_after = CacheTest.authorized_client.get(url)
+
         cache.clear()
-        response_cache_clear = PostPagesTest.authorized_client.get(url)
+
+        response_cache_clear = CacheTest.authorized_client.get(url)
 
         self.assertEqual(
-            response_before_post.content,
-            response_after_post.content
+            response_before.content,
+            response_after.content
         )
         self.assertNotEqual(
-            response_after_post.content,
+            response_before.content,
             response_cache_clear.content
         )
 
-    def setUp(self):
 
+class FollowTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='auth')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.other_user = User.objects.create_user(username='other_auth')
+        cls.authorized_other_client = Client()
+        cls.authorized_other_client.force_login(cls.other_user)
+        cls.authors = cls.user.follower.all()
         Post.objects.create(
             text=POST_TEXT,
-            author=PostPagesTest.other_user
+            author=FollowTest.other_user
         )
-        Follow.objects.create(
-            user_id=PostPagesTest.user.id,
-            author_id=PostPagesTest.other_user.id
+        cls.follow = Follow.objects.create(
+            user_id=FollowTest.user.id,
+            author_id=FollowTest.other_user.id
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cache.clear()
 
     def test_follow(self):
         """Проверяем что записи автора, на которого подписан пользователь,
-        появляются у него в ленте 'Избранное' и не появляются у пользователей,
-        которые не подписаны на автора"""
+        появляются у него в ленте 'Избранное'"""
         url = reverse('posts:follow_index')
 
-        response_follow = PostPagesTest.authorized_client.get(url)
-        object_follow = response_follow.context['page_obj']
+        response_follow = FollowTest.authorized_client.get(url)
+        object_author = response_follow.context['page_obj'][0].author
 
-        response_not_follow = PostPagesTest.authorized_other_client.get(url)
-        object_not_follow = response_not_follow.context['page_obj']
+        self.assertEqual(object_author, FollowTest.follow.author)
 
-        self.assertNotEqual(object_follow, object_not_follow)
+    def test_unfollow(self):
+        """Проверяем что записи автора, на которого не подписан пользователь,
+        не появляются у пользователя в 'Избранное'"""
+        url = reverse('posts:follow_index')
 
-    def setUp(self):
-        self.user = User.objects.create_user(username='user')
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        self.authors = self.user.follower.all()
+        response_not_follow = FollowTest.authorized_other_client.get(url)
+
+        object_not_follow = response_not_follow.context['page_obj'].object_list
+
+        self.assertFalse(object_not_follow)
 
     def test_follow_auth(self):
         """Проверяем что пользователь не может подписаться на
         самого себя"""
-        authors_before_follow = self.authors.count()
+        authors_before_follow = FollowTest.authors.count()
         self.authorized_client.get(
             reverse('posts:profile_follow', kwargs={'username': self.user})
         )
-        authors_after_follow = self.authors.count()
+        authors_after_follow = FollowTest.authors.count()
 
         self.assertEqual(authors_before_follow, authors_after_follow)
 
