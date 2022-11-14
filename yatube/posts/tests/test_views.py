@@ -219,7 +219,6 @@ class CacheTest(TestCase):
         super().tearDownClass()
         cache.clear()
 
-
     def test_cache(self):
         """Проверка кеширования главной страницы"""
         url = reverse('posts:posts_index')
