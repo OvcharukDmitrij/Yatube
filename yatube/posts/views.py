@@ -13,6 +13,7 @@ def paginat(request, queryset):
     page_number = request.GET.get('page')
     return pagin.get_page(page_number)
 
+
 def index(request):
     post_list = Post.objects.all()
     context = {

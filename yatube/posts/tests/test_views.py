@@ -219,8 +219,6 @@ class CacheTest(TestCase):
         super().tearDownClass()
         cache.clear()
 
-    def setUp(self):
-        cache.clear()
 
     def test_cache(self):
         """Проверка кеширования главной страницы"""
