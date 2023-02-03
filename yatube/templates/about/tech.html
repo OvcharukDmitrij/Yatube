@@ -1,31 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Технологии{% endblock %}
 {% block content %}
-{% comment %} Колонки с отступом сверху и снизу {% endcomment %}
 <div class="row">
-  <h1>Вот что я умею</h1>
-  {% comment %}
-    Боковой блок со списком технологий
-    Займет всю ширину блока на мобильном
-    и 25% при размерах экрана ≥768px
-  {% endcomment %}
+  <h2>Вот что я использовал в этом проекте:</h2>
   <aside class="col-12 col-md-3">
     <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        Python
-      </li>
-      <li class="list-group-item">
-        Django
-      </li>
+      <h4>
+        <p><li>Python</li></p>
+        <p><li>Django</li></p>
+        <p><li>SQLite3</li></p>
+        <p><li>Html</li></p>
+        <p><li>GitHub</li></p>
+        <p> <li>И сотни страниц информации в интернете)))</li></p>
+      </h4>
     </ul>
   </aside>
-  {% comment %}
-    Статья
-    Займет всю ширину блока на мобильном
-    и 75% при размерах экрана ≥768px
-  {% endcomment %}
-  <article class="col-12 col-md-9">
-    <p>Текст страницы "Технологии"</p>
-  </article>
+<!--  <article class="col-12 col-md-9">-->
+<!--    <p>Текст страницы "Технологии"</p>-->
+<!--  </article>-->
 </div>
 {% endblock %}

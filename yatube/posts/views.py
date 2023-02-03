@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
 
-NUMBER_OF_POSTS = 10  # количество отображаемых постов на странице
+NUMBER_OF_POSTS = 5  # количество отображаемых постов на странице
 
 
 def paginat(request, queryset):

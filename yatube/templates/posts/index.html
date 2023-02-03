@@ -5,29 +5,32 @@
   Последние обновления на сайте
 {% endblock %}
 {% block content %}
-  <h1>Последние обновления на сайте</h1>
+  <h1>Стоики vs Эпикурейцы</h1>
+  <hr>
   {% include 'posts/includes/switcher.html' %}
-  {% cache 20 index_page %}
+  {% cache 10 index_page %}
   {% for post in page_obj %}
     <article>
+      <p>
+        {% thumbnail post.image "300x300" as im %}
+          <img src="{{ im.url }}" width=250 height=350>
+        {% endthumbnail %}
+      </p>
+      <p style="font-style:italic; font-size:150%; text-center">{{ post.text }}</p>
       <ul>
         <li>
           Автор: {{ post.author.get_full_name }}
-          <a href="{% url 'posts:profile' post.author.username %}">
-            все посты пользователя
-          </a>
         </li>
-        <li>
-          Дата публикации: {{ post.created|date:"d E Y" }}
-        </li>
+<!--        <li>-->
+<!--          Дата публикации: {{ post.created|date:"d E Y" }}-->
+<!--        </li>-->
       </ul>
-      {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-        <img class="card-img my-2" src="{{ im.url }}">
-      {% endthumbnail %}
-      <p>{{ post.text }}</p>
-      <a href="{% url 'posts:post_detail' post.id %}">
+      <p><a href="{% url 'posts:post_detail' post.id %}">
         подробная информация
-      </a>
+      </a></p>
+      <p><a href="{% url 'posts:profile' post.author.username %}">
+        все посты пользователя
+      </a></p>
     </article>
     {% if post.group %}
       <a href=" {% url 'posts:posts_group' post.group.slug %} ">
